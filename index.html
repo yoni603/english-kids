@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>אנגלית בכיף</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky1:#7dd3fc; --sky2:#c4b5fd; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
+  --good:#22c55e; --bad:#ef4444; --accent:#f59e0b; --brand:#6366f1; --focus:#facc15;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:Rubik,Arial,sans-serif; color:var(--ink);
+  background:linear-gradient(160deg,var(--sky1),var(--sky2)); background-attachment:fixed;
+  overflow:hidden; font-size:clamp(16px,2.2vh,40px);
+}
+.emoji{font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif}
+.en{direction:ltr;unicode-bidi:isolate}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;outline:none}
+button:focus-visible{box-shadow:0 0 0 .6vh var(--focus),0 .6vh 0 rgba(0,0,0,.15)!important;transform:scale(1.04)}
+.screen{display:none;position:absolute;inset:0;padding:3vh 4vw;flex-direction:column}
+.screen.active{display:flex}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:2vw;margin-bottom:2vh}
+.topbar h1{margin:0;font-size:5vh;font-weight:800;flex:1}
+.pill{background:rgba(255,255,255,.8);border-radius:99px;padding:1vh 2.2vh;font-size:3.2vh;font-weight:600}
+.iconbtn{background:rgba(255,255,255,.85);border-radius:2vh;font-size:4vh;padding:1vh 2vh;box-shadow:0 .5vh 0 rgba(0,0,0,.12)}
+
+/* welcome */
+#welcome{align-items:center;justify-content:center;text-align:center;gap:3vh}
+.mascot{font-size:22vh;line-height:1;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-2vh) rotate(-4deg)}}
+#welcome h1{font-size:8vh;margin:0}
+#welcome p{font-size:4vh;margin:0}
+#nameInput{font-family:inherit;font-size:5vh;padding:1.5vh 3vh;border-radius:2vh;border:.5vh solid #fff;text-align:center;width:min(60vw,700px)}
+.bigbtn{background:var(--accent);color:#fff;font-size:5vh;font-weight:800;padding:2vh 6vh;border-radius:3vh;box-shadow:0 1vh 0 #b45309}
+.bigbtn:active{transform:translateY(.6vh);box-shadow:0 .4vh 0 #b45309}
+.bigbtn.blue{background:var(--brand);box-shadow:0 1vh 0 #3730a3}
+.bigbtn.gray{background:#94a3b8;box-shadow:0 1vh 0 #475569}
+
+/* map */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(26vw,340px),1fr));gap:2.4vh;overflow-y:auto;padding:1vh 1vh 4vh}
+.lvl{background:var(--card);border-radius:3vh;padding:2vh;display:flex;align-items:center;gap:2vh;text-align:right;box-shadow:0 .8vh 0 rgba(0,0,0,.12);min-height:14vh;position:relative}
+.lvl .ic{font-size:7vh}
+.lvl .t{font-size:3.2vh;font-weight:700;line-height:1.2}
+.lvl .s{font-size:3vh;margin-top:.6vh;letter-spacing:.3vh}
+.lvl .num{position:absolute;top:1vh;left:1.6vh;font-size:2.4vh;color:var(--muted);font-weight:700}
+.lvl.locked{opacity:.5;filter:grayscale(1)}
+.lvl.next{outline:.6vh solid var(--accent);animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{50%{outline-color:#fde68a}}
+
+/* game */
+#game{align-items:center}
+.progress{display:flex;gap:1vh;flex:1;justify-content:center}
+.dot{width:3.2vh;height:3.2vh;border-radius:50%;background:rgba(255,255,255,.6);border:.4vh solid #fff}
+.dot.cur{background:#fff;transform:scale(1.25)}
+.dot.ok{background:var(--good)}
+.dot.half{background:var(--accent)}
+.dot.miss{background:var(--bad)}
+.instr{font-size:4.2vh;font-weight:700;text-align:center;margin:1vh 0 2vh;background:rgba(255,255,255,.7);padding:1vh 3vh;border-radius:2vh}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;width:100%}
+.prompt{background:var(--card);border-radius:4vh;padding:2vh 5vh;min-width:40vh;min-height:24vh;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1vh 0 rgba(0,0,0,.12)}
+.prompt .big{font-size:20vh;line-height:1.05;font-weight:800}
+.prompt .mid{font-size:9vh;font-weight:800;line-height:1.1;text-align:center}
+.prompt .sub{font-size:5vh;color:var(--muted);font-weight:600}
+.speaker{background:var(--brand);color:#fff;font-size:12vh;width:26vh;height:26vh;border-radius:50%;box-shadow:0 1.2vh 0 #3730a3}
+.speaker.playing{animation:pulse .7s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.choices{display:grid;grid-template-columns:repeat(4,1fr);gap:3vh;width:min(92vw,1600px)}
+.choice{background:var(--card);border-radius:3vh;min-height:22vh;font-size:12vh;font-weight:800;box-shadow:0 1vh 0 rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;padding:1vh;transition:transform .15s}
+.choice.word{font-size:7.5vh}
+.choice .heb{font-size:11vh;font-weight:800}
+.fambadge{font-size:6vh;font-weight:800;background:#fef3c7;color:#b45309;border-radius:2vh;padding:0 2.5vh;margin:.5vh 0}
+.blend{display:flex;gap:4vh;transition:gap .5s ease;padding:1vh 2vh}
+.blend.joined{gap:0}
+.bl{display:flex;flex-direction:column;align-items:center;transition:transform .2s}
+.bL{font-size:17vh;font-weight:800;line-height:1.05;color:#94a3b8;transition:color .2s}
+.bH{font-size:6vh;font-weight:700;color:#cbd5e1;direction:rtl;min-height:8vh;transition:color .2s}
+.bl.lit{transform:translateY(-1.5vh) scale(1.15)}
+.bl.lit .bL{color:var(--accent)} .bl.lit .bH{color:#b45309}
+.bl.done .bL{color:var(--ink)} .bl.done .bH{color:var(--brand)}
+.blend.joined .bL{color:var(--good)}
+.choice.ok{background:var(--good);color:#fff;transform:scale(1.08)}
+.choice.no{background:#fecaca;opacity:.6;animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-1.5vh)}40%,80%{transform:translateX(1.5vh)}}
+.row{display:flex;gap:2.5vh;align-items:center;justify-content:center;flex-wrap:wrap}
+.btn{background:#fff;font-size:3.6vh;font-weight:700;padding:1.6vh 3.5vh;border-radius:2.5vh;box-shadow:0 .7vh 0 rgba(0,0,0,.15)}
+.btn.small{font-size:2.6vh;padding:1vh 2.4vh;opacity:.85}
+.mic{font-size:11vh;width:24vh;height:24vh;border-radius:50%;background:var(--good);color:#fff;box-shadow:0 1.2vh 0 #15803d}
+.mic.listen{background:var(--bad);box-shadow:0 0 0 0 rgba(239,68,68,.6),0 1.2vh 0 #991b1b;animation:ring 1.1s infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(239,68,68,.6),0 1.2vh 0 #991b1b}100%{box-shadow:0 0 0 5vh rgba(239,68,68,0),0 1.2vh 0 #991b1b}}
+.micstatus{font-size:4vh;font-weight:700;min-height:5vh;text-align:center}
+.heard{font-size:3.2vh;color:#334155;min-height:4vh;text-align:center}
+
+/* feedback bubble */
+#bubble{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%) scale(.5);opacity:0;pointer-events:none;
+  background:#fff;border-radius:5vh;padding:3vh 7vh;font-size:9vh;font-weight:800;box-shadow:0 2vh 6vh rgba(0,0,0,.25);transition:all .25s;z-index:50;white-space:nowrap}
+#bubble.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#bubble.good{color:var(--good)} #bubble.bad{color:var(--bad)}
+
+/* result */
+#result{align-items:center;justify-content:center;text-align:center;gap:3vh}
+#result .stars{font-size:16vh;letter-spacing:2vh}
+#result h1{font-size:8vh;margin:0}
+#result p{font-size:4.5vh;margin:0}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:60}
+.modal.open{display:flex}
+.panel{background:#fff;border-radius:3vh;padding:4vh 5vh;width:min(90vw,900px);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:2vh}
+.panel h2{margin:0;font-size:5vh}
+.panel .note{font-size:2.6vh;color:var(--muted);line-height:1.4}
+.panel .btn{background:#f1f5f9}
+.panel .btn.danger{background:#fee2e2;color:#b91c1c}
+
+.confetti{position:fixed;top:-3vh;width:1.6vh;height:2.4vh;z-index:70;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<section id="welcome" class="screen">
+  <div class="mascot emoji">🦉</div>
+  <h1>אנגלית בכיף!</h1>
+  <p id="welcomeText">שלום! אני ינשופי, ואני אלמד אותך אנגלית.<br>איך קוראים לך?</p>
+  <input id="nameInput" maxlength="20" placeholder="השם שלי" autocomplete="off">
+  <button class="bigbtn" id="startBtn">יאללה, מתחילים! 🚀</button>
+</section>
+
+<!-- MAP -->
+<section id="map" class="screen">
+  <div class="topbar">
+    <span class="emoji" style="font-size:7vh">🦉</span>
+    <h1 id="hello">שלום!</h1>
+    <span class="pill" id="totalStars">⭐ 0</span>
+    <button class="iconbtn emoji" id="fsBtn" title="מסך מלא">⛶</button>
+    <button class="iconbtn emoji" id="settingsBtn" title="הגדרות להורים">⚙️</button>
+  </div>
+  <div class="grid" id="levelGrid"></div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen">
+  <div class="topbar" style="width:100%">
+    <button class="iconbtn" id="homeBtn">🏠 מפה</button>
+    <div class="progress" id="progress"></div>
+    <span class="pill" id="levelName"></span>
+  </div>
+  <div class="instr" id="instr"></div>
+  <div class="stage" id="stage"></div>
+</section>
+
+<!-- RESULT -->
+<section id="result" class="screen">
+  <div class="stars emoji" id="resStars"></div>
+  <h1 id="resTitle"></h1>
+  <p id="resText"></p>
+  <div class="row" id="resBtns"></div>
+</section>
+
+<!-- SETTINGS -->
+<div class="modal" id="settings">
+  <div class="panel">
+    <h2>⚙️ הגדרות להורים</h2>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn" id="micTestBtn">🎤 בדיקת מיקרופון</button>
+      <span id="micTestOut" class="note"></span>
+    </div>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn" id="voiceTestBtn">🔊 בדיקת קולות</button>
+      <span id="voiceInfo" class="note"></span>
+    </div>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn" id="lenientBtn"></button>
+      <button class="btn" id="renameBtn">✏️ שינוי שם</button>
+      <button class="btn danger" id="resetBtn">🗑️ איפוס התקדמות</button>
+    </div>
+    <div class="note" id="weakList"></div>
+    <div class="note">
+      <b>🎤 מיקרופון:</b> מיקרופון של מחשב נייד שומע טוב רק מקרוב. אם הילד יושב רחוק מהמחשב, מיקרופון אלחוטי או אוזניות עם מיקרופון ישפרו מאוד את הזיהוי.<br>
+      <b>טיפים:</b> מקש רווח = לשמוע שוב · חיצים + Enter = ניווט · F11 = מסך מלא.<br>
+      בשלבי הדיבור יש כפתור "אמר נכון (הורה)" למקרה שהמחשב לא הבין אותו למרות שאמר נכון.<br>
+      זיהוי דיבור דורש חיבור לאינטרנט ודפדפן Chrome.
+    </div>
+    <button class="bigbtn blue" id="closeSettings">סגור</button>
+  </div>
+</div>
+
+<div id="bubble"></div>
+
+<script>
+/* ========================= DATA ========================= */
+const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const LETTER_ACCEPT = {
+  A:['a','ay','hey','eh','ei','aye a'],B:['b','be','bee','bea','bi'],C:['c','see','sea','si','she','cee'],
+  D:['d','dee','de','di','the'],E:['e','ee','he','yi','eat'],F:['f','ef','eff','if','af'],G:['g','gee','ji','jee','gi'],
+  H:['h','aitch','age','each','edge','eight','ach'],I:['i','eye','aye','hi','ai','high'],J:['j','jay','jae','jey'],
+  K:['k','kay','okay','ok','cay','kai','que','care'],L:['l','el','elle','ell','al','well','hell'],M:['m','em','am','um','him','them'],
+  N:['n','en','and','in','an','end'],O:['o','oh','owe','ou','0','zero','oo'],P:['p','pee','pea','pe','pi','pay'],
+  Q:['q','queue','cue','kyu','kew','cute','cool'],R:['r','are','our','ar','or','arr','hour'],S:['s','es','ess','yes','as','is','ass'],
+  T:['t','tea','tee','ti','te','tree'],U:['u','you','yu','ew','yo','ooh'],V:['v','vee','we','ve','vi','fee'],
+  W:['w','double u','double you','dabaliu','double','w w'],X:['x','ex','eggs','ax','axe','eks','x.'],
+  Y:['y','why','wai','wye','whi','white'],Z:['z','zee','zed','zet','zi','g']
+};
+const LETTER_WORDS = {
+  A:['apple','🍎','תפוח'],B:['ball','⚽','כדור'],C:['cat','🐱','חתול'],D:['dog','🐶','כלב'],E:['egg','🥚','ביצה'],
+  F:['fish','🐟','דג'],G:['grapes','🍇','ענבים'],H:['hat','🎩','כובע'],I:['ice','🧊','קרח'],J:['juice','🧃','מיץ'],
+  K:['key','🔑','מפתח'],L:['lion','🦁','אריה'],M:['moon','🌙','ירח'],N:['nose','👃','אף'],O:['octopus','🐙','תמנון'],
+  P:['pig','🐷','חזיר'],Q:['queen','👸','מלכה'],R:['rabbit','🐰','ארנב'],S:['sun','☀️','שמש'],T:['tree','🌳','עץ'],
+  U:['umbrella','☂️','מטרייה'],V:['violin','🎻','כינור'],W:['watermelon','🍉','אבטיח'],X:['x-ray','🩻','צילום רנטגן'],
+  Y:['yo-yo','🪀','יו-יו'],Z:['zebra','🦓','זברה']
+};
+const WORDS = [
+  ['cat','🐱','חתול'],['dog','🐶','כלב'],['sun','☀️','שמש',['son']],['bus','🚌','אוטובוס'],['egg','🥚','ביצה'],
+  ['fish','🐟','דג'],['hat','🎩','כובע'],['cup','☕','ספל',['cap']],['bed','🛏️','מיטה'],['pig','🐷','חזיר'],
+  ['box','📦','קופסה'],['ball','⚽','כדור'],['apple','🍎','תפוח'],['banana','🍌','בננה'],['car','🚗','מכונית'],
+  ['tree','🌳','עץ'],['book','📖','ספר'],['house','🏠','בית'],['moon','🌙','ירח'],['star','⭐','כוכב'],
+  ['frog','🐸','צפרדע'],['duck','🦆','ברווז'],['cake','🎂','עוגה'],['milk','🥛','חלב'],['bird','🐦','ציפור'],
+  ['lion','🦁','אריה'],['horse','🐴','סוס'],['cow','🐮','פרה'],['bee','🐝','דבורה',['be','b']],['key','🔑','מפתח'],
+  ['door','🚪','דלת'],['bag','🎒','תיק'],['hand','✋','יד'],['nose','👃','אף',['knows']],['shoe','👟','נעל'],
+  ['phone','📱','טלפון'],['flower','🌸','פרח',['flour']],['boy','👦','ילד'],['girl','👧','ילדה'],['baby','👶','תינוק']
+].map(([en,pic,he,accept])=>({en,pic,he,accept,cat:'word'}));
+const COLORS = [
+  ['red','🔴','אדום',['read']],['blue','🔵','כחול',['blew']],['green','🟢','ירוק'],['yellow','🟡','צהוב'],
+  ['orange','🟠','כתום'],['purple','🟣','סגול'],['black','⚫','שחור'],['white','⚪','לבן'],['brown','🟤','חום']
+].map(([en,pic,he,accept])=>({en,pic,he,accept,cat:'color'}));
+const NUMS = [
+  ['one','1','אחת',['won','1']],['two','2','שתיים',['to','too','2']],['three','3','שלוש',['3','tree','free']],['four','4','ארבע',['for','4']],
+  ['five','5','חמש',['5']],['six','6','שש',['6','sex']],['seven','7','שבע',['7']],['eight','8','שמונה',['ate','8']],
+  ['nine','9','תשע',['9']],['ten','10','עשר',['10']]
+].map(([en,pic,he,accept])=>({en,pic,he,accept,cat:'num',textPic:true}));
+const SENTENCES = [
+  ['I see a cat','🐱','אני רואה חתול'],['The sun is hot','☀️','השמש חמה'],['I like apples','🍎','אני אוהב תפוחים'],
+  ['The dog is big','🐶','הכלב גדול'],['I have a ball','⚽','יש לי כדור'],['The bird can fly','🐦','הציפור יכולה לעוף'],
+  ['I drink milk','🥛','אני שותה חלב'],['The fish can swim','🐟','הדג יכול לשחות'],['I eat a banana','🍌','אני אוכל בננה'],
+  ['My house is big','🏠','הבית שלי גדול'],['I read a book','📖','אני קורא ספר'],['The frog is green','🐸','הצפרדע ירוקה'],
+  ['I see the moon','🌙','אני רואה את הירח'],['I like cake','🎂','אני אוהב עוגה'],['The car is fast','🚗','המכונית מהירה'],
+  ['The baby is happy','👶','התינוק שמח'],['I have a red hat','🎩','יש לי כובע אדום'],['The lion is strong','🦁','האריה חזק']
+].map(([en,pic,he])=>({en,pic,he,cat:'sent'}));
+
+/* Hebrew sound hints for each letter (like Israeli schools write under English words) */
+const SOUND = {A:'אֶ',B:'בּ',C:'ק',D:'ד',E:'אֶ',F:'פ',G:'ג',H:'ה',I:'אִ',J:'ג׳',K:'ק',L:'ל',M:'מ',N:'נ',O:'אוֹ',P:'פּ',
+  Q:'קוּ',R:'ר',S:'ס',T:'ט',U:'אַ',V:'ו',W:'וו',X:'קס',Y:'י',Z:'ז'};
+/* Short decodable words: consonant-vowel-consonant */
+const CVC = [
+  ['cat','🐱','חתול'],['hat','🎩','כובע'],['bat','🦇','עטלף'],['rat','🐀','עכברוש'],['map','🗺️','מפה'],['cap','🧢','כובע מצחייה'],
+  ['bag','🎒','תיק'],['van','🚐','טנדר'],['pan','🍳','מחבת'],['bed','🛏️','מיטה'],['hen','🐔','תרנגולת'],['pen','🖊️','עט'],
+  ['ten','🔟','עשר'],['net','🥅','רשת'],['jet','✈️','מטוס'],['web','🕸️','קורי עכביש'],['leg','🦵','רגל'],['red','🔴','אדום'],
+  ['pig','🐷','חזיר'],['pin','📌','נעץ'],['bin','🗑️','פח'],['fin','🦈','סנפיר'],['lip','👄','שפתיים'],['kid','🧒','ילד'],
+  ['dog','🐶','כלב'],['fox','🦊','שועל'],['box','📦','קופסה'],['log','🪵','בול עץ'],['sun','☀️','שמש'],['bus','🚌','אוטובוס'],
+  ['cup','☕','ספל'],['bug','🐛','חרק'],['nut','🥜','אגוז'],['hut','🛖','בקתה'],['tub','🛁','אמבטיה']
+].map(([en,pic,he])=>({en,pic,he,cat:'cvc'}));
+const FAMILIES = {
+  at:[['cat','🐱','חתול'],['hat','🎩','כובע'],['bat','🦇','עטלף'],['rat','🐀','עכברוש']],
+  ap:[['map','🗺️','מפה'],['cap','🧢','כובע מצחייה'],['nap','😴','תנומה'],['tap','🚰','ברז']],
+  en:[['hen','🐔','תרנגולת'],['pen','🖊️','עט'],['ten','🔟','עשר']],
+  et:[['net','🥅','רשת'],['jet','✈️','מטוס'],['wet','💧','רטוב']],
+  in:[['pin','📌','נעץ'],['bin','🗑️','פח'],['fin','🦈','סנפיר'],['tin','🥫','פחית']],
+  og:[['dog','🐶','כלב'],['log','🪵','בול עץ'],['fog','🌫️','ערפל']],
+  ug:[['bug','🐛','חרק'],['hug','🤗','חיבוק'],['jug','🏺','כד'],['mug','☕','ספל']],
+  un:[['sun','☀️','שמש'],['bun','🍞','לחמנייה'],['run','🏃','לרוץ'],['fun','🎉','כיף']]
+};
+const FAMW = Object.entries(FAMILIES).flatMap(([fam,ws])=>ws.map(([en,pic,he])=>({en,pic,he,fam,cat:'fam'})));
+/* Most common sight words - learned by heart, not decoded */
+const SIGHT = [
+  ['the','הַ־'],['a','אחד / ־'],['I','אני'],['you','אתה / את'],['is','הוא / היא / זה'],['and','וְ / וגם'],['it','זה'],
+  ['in','בתוך'],['my','שלי'],['we','אנחנו'],['he','הוא'],['she','היא'],['can','יכול'],['see','רואה'],['like','אוהב'],
+  ['go','הולך'],['look','תסתכל'],['yes','כן'],['no','לא'],['this','זה / זאת'],['have','יש לי'],['said','אמר'],['are','הם / אתם'],['to','אל / ל־']
+].map(([en,he])=>({en,he,cat:'sight',accept: en==='to'?['two','too']:en==='I'?['eye']:en==='see'?['sea']:undefined}));
+
+const letters = s => s.split('').map(L=>({en:L,show:L,say:L,cat:'letter',accept:LETTER_ACCEPT[L]}));
+const soundLetters = () => ABC.map(L=>({en:L,show:L.toLowerCase(),say:`${L}. ${LETTER_WORDS[L][0]}`,cat:'letter'}));
+const letterWordItems = () => ABC.map(L=>{const [w,pic,he]=LETTER_WORDS[L];return {en:w,pic,he,letter:L,cat:'lw'}});
+
+const INTRO = {
+  listenLetter:'הקשב לאות ובחר אותה',
+  upperLower:'לכל אות גדולה יש אות קטנה. מצא את האות הקטנה',
+  sayLetter:'עכשיו תורך! תגיד את האות בקול',
+  firstLetter:'באיזו אות מתחילה המילה?',
+  listenWord:'הקשב למילה ובחר את התמונה',
+  sayWord:'תגיד את המילה באנגלית',
+  readPick:'קרא ובחר: איך אומרים את זה באנגלית?',
+  translate:'איך אומרים באנגלית? תגיד בקול',
+  listenSent:'הקשב למשפט ובחר את התמונה המתאימה',
+  saySent:'תגיד את כל המשפט באנגלית'
+};
+
+/* type: pick | speak.  mode decides how prompt/choices look */
+const LEVELS = [
+  {id:'abc1',icon:'🔤',title:'אותיות A–I',type:'pick',mode:'listen',intro:INTRO.listenLetter,pool:()=>letters('ABCDEFGHI'),disp:'text'},
+  {id:'abc2',icon:'🔡',title:'אותיות J–R',type:'pick',mode:'listen',intro:INTRO.listenLetter,pool:()=>letters('JKLMNOPQR'),disp:'text'},
+  {id:'abc3',icon:'🅰️',title:'אותיות S–Z',type:'pick',mode:'listen',intro:INTRO.listenLetter,pool:()=>letters('STUVWXYZ'),disp:'text'},
+  {id:'abc4',icon:'🏆',title:'כל האותיות',type:'pick',mode:'listen',intro:INTRO.listenLetter,pool:()=>letters(ABC.join('')),disp:'text'},
+  {id:'lower',icon:'🔠',title:'אות גדולה – אות קטנה',type:'pick',mode:'upper',intro:INTRO.upperLower,pool:()=>letters(ABC.join('')),disp:'lower',hint:true},
+  {id:'lowL',icon:'🔡',title:'אותיות קטנות',type:'pick',mode:'listen',intro:'הקשב לאות ובחר את האות הקטנה',pool:()=>letters(ABC.join('')),disp:'lower',hint:true},
+  {id:'lowU',icon:'🔁',title:'אות קטנה – אות גדולה',type:'pick',mode:'lowshow',intro:'מצא את האות הגדולה של האות הקטנה',pool:()=>letters(ABC.join('')),disp:'text',hint:true},
+  {id:'bdpq',icon:'🪞',title:'b d p q – לא להתבלבל!',type:'pick',mode:'listen',intro:'זהירות, האותיות האלה דומות! הקשב ובחר',pool:()=>letters('BDPQ'),disp:'lower',hint:true},
+  {id:'sayL',icon:'🎤',title:'תגיד את האות',type:'speak',mode:'letter',intro:INTRO.sayLetter,pool:()=>letters(ABC.join(''))},
+  {id:'sounds',icon:'👄',title:'הצליל של האות',type:'pick',mode:'sound',intro:'איזה צליל עושה האות? (הקשב למילה)',pool:soundLetters,disp:'heb'},
+  {id:'first',icon:'🍎',title:'באיזו אות מתחילה?',type:'pick',mode:'first',intro:INTRO.firstLetter,pool:letterWordItems,disp:'lower',
+    answer:it=>letters(it.letter)[0], choicePool:()=>letters(ABC.join(''))},
+  {id:'blend',icon:'🧩',title:'בוא נקרא!',type:'pick',mode:'blend',intro:'קרא צליל אחרי צליל, חבר למילה, ובחר את התמונה',pool:()=>CVC,disp:'pic'},
+  {id:'fam',icon:'🏡',title:'משפחות מילים',type:'pick',mode:'family',intro:'כל המילים נגמרות אותו דבר. איזו מילה מתאימה לתמונה?',pool:()=>FAMW,disp:'word',
+    choicePool:it=>FAMW.filter(w=>w.fam===it.fam)},
+  {id:'words1',icon:'🐶',title:'מילים ראשונות',type:'pick',mode:'listen',intro:INTRO.listenWord,pool:()=>WORDS,disp:'pic'},
+  {id:'colnum',icon:'🌈',title:'צבעים ומספרים',type:'pick',mode:'listen',intro:INTRO.listenWord,pool:()=>[...COLORS,...NUMS],disp:'pic'},
+  {id:'sayW',icon:'🗣️',title:'תגיד את המילה',type:'speak',mode:'word',intro:INTRO.sayWord,pool:()=>[...WORDS,...COLORS]},
+  {id:'sight',icon:'👀',title:'מילים לזכור',type:'pick',mode:'listen',intro:'הקשב למילה ומצא אותה',pool:()=>SIGHT,disp:'word',meaning:true},
+  {id:'read',icon:'📖',title:'קוראים באנגלית',type:'pick',mode:'read',intro:INTRO.readPick,pool:()=>[...WORDS,...COLORS],disp:'word'},
+  {id:'trans',icon:'💬',title:'מה זה באנגלית?',type:'speak',mode:'translate',intro:INTRO.translate,pool:()=>[...WORDS,...COLORS,...NUMS]},
+  {id:'sent',icon:'👂',title:'משפטים קצרים',type:'pick',mode:'listen',intro:INTRO.listenSent,pool:()=>SENTENCES,disp:'pic'},
+  {id:'sayS',icon:'🌟',title:'תגיד משפט שלם',type:'speak',mode:'sentence',intro:INTRO.saySent,pool:()=>SENTENCES},
+];
+const QN = 10;
+const passOf = L => L.type==='speak' ? 6 : 8;
+
+const PRAISE_EN = ['Great job!','Excellent!','Super!','Well done!','Awesome!','Fantastic!','Perfect!','You did it!'];
+const PRAISE_HE = ['כל הכבוד!','מעולה!','יפה מאוד!','אלוף!','וואו!','מדהים!','מושלם!'];
+
+/* ========================= STATE ========================= */
+const KEY='english-kids-v1';
+let state = {name:'',stars:{},unlockAll:false,lenient:true,mist:{}};
+try{ Object.assign(state, JSON.parse(localStorage.getItem(KEY))||{}); }catch(e){}
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} };
+
+/* ========================= UTIL ========================= */
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pickN = (pool,n) => { let out=[]; while(out.length<n) out=out.concat(shuffle(pool)); return out.slice(0,n); };
+const rand = a => a[Math.random()*a.length|0];
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id)); }
+
+/* ========================= SOUND ========================= */
+let actx;
+function tone(freq,dur,type='sine',when=0,vol=.18){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain(), t0=actx.currentTime+when;
+    o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0+dur+.05);
+  }catch(e){}
+}
+const sfx = {
+  good(){tone(660,.15,'triangle');tone(880,.3,'triangle',.12)},
+  bad(){tone(240,.18,'sine',0,.15);tone(180,.3,'sine',.15,.15)},
+  win(){[523,659,784,1047,1319].forEach((f,i)=>tone(f,.35,'triangle',i*.12))},
+  pop(){tone(900,.06,'sine',0,.1)}
+};
+
+/* ========================= TTS ========================= */
+let voices=[];
+const loadVoices = () => { voices = speechSynthesis.getVoices(); };
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function voiceFor(lang){
+  if(lang==='he') return voices.find(v=>/^(he|iw)/i.test(v.lang));
+  const en = voices.filter(v=>/^en/i.test(v.lang));
+  for(const p of ['Google US English','Ana Online','Jenny Online','Aria Online','Samantha','Zira','Google UK English Female'])
+    { const v=en.find(v=>v.name.includes(p)); if(v) return v; }
+  return en.find(v=>v.lang==='en-US') || en[0];
+}
+const hasHebrewVoice = () => !!voiceFor('he');
+function say(text, lang='en', rate){
+  return new Promise(res=>{
+    if(!('speechSynthesis' in window)) return res();
+    const v = voiceFor(lang);
+    if(lang==='he' && !v) return res();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang==='he' ? 'he-IL' : 'en-US';
+    if(v) u.voice = v;
+    u.rate = rate || (lang==='en' ? .8 : 1);
+    let done=false; const fin=()=>{ if(!done){done=true;clearTimeout(t);res();} };
+    u.onend=fin; u.onerror=fin;
+    const t=setTimeout(fin, 2000 + text.length*160);
+    speechSynthesis.speak(u);
+  });
+}
+
+/* ========================= SPEECH RECOGNITION ========================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let currentRec = null;
+// check(alts) is called on every partial result too, so a correct answer is accepted the moment it's heard
+function listen(ms=8000, check){
+  return new Promise((res,rej)=>{
+    if(!SR) return rej('unsupported');
+    const r = new SR(); currentRec = r;
+    r.lang='en-US'; r.interimResults=true; r.maxAlternatives=5; r.continuous=false;
+    const alts=[]; let finished=false;
+    const end = err => { if(finished) return; finished=true; clearTimeout(t); currentRec=null; try{r.abort()}catch(e){} err?rej(err):res(alts); };
+    r.onresult = e => {
+      let final=false;
+      for(let i=e.resultIndex;i<e.results.length;i++){ for(const a of e.results[i]) if(a.transcript.trim()) alts.push(a.transcript); if(e.results[i].isFinal) final=true; }
+      if(final || (check && alts.length && check(alts))) end();
+    };
+    r.onerror = e => (e.error==='no-speech'||e.error==='aborted') ? end() : end(e.error);
+    r.onend = () => end();
+    const t = setTimeout(()=>end(), ms);
+    try{ r.start(); }catch(e){ end('start-failed'); }
+  });
+}
+function stopListening(){ if(currentRec) try{currentRec.abort()}catch(e){} }
+
+const NUMW = {'0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','10':'ten'};
+const norm = s => s.toLowerCase().replace(/\b(10|[0-9])\b/g,d=>NUMW[d]||d).replace(/[^a-z' -]/g,' ').replace(/-/g,' ').replace(/\s+/g,' ').trim();
+const toks = s => norm(s).split(' ').filter(Boolean);
+function lev(a,b){ const m=a.length,n=b.length; const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]); for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[m][n]; }
+const wordEq = (x,t) => x===t || x===t+'s' || x===t+'es' || (t.length>=4 && lev(x,t)<=1) || (t.length>=7 && lev(x,t)<=2);
+
+function matchLetter(alts,item){
+  const acc = item.accept.map(norm);
+  return alts.some(a=>{
+    let s = norm(a).replace(/^(the )?letter /,'');
+    const ts = s.split(' ');
+    return [s, ts[0], ts[ts.length-1]].some(c=>acc.includes(c));
+  });
+}
+function matchWord(alts,item){
+  const targets=[norm(item.en),...(item.accept||[]).map(norm)];
+  return alts.some(a=>{ const ts=toks(a), joined=ts.join(' ');
+    return targets.some(t=> t.includes(' ') ? joined.includes(t) : ts.some(x=>wordEq(x,t))); });
+}
+function matchSentence(alts,item,need=.7,eq=wordEq){
+  const tw = toks(item.en);
+  return alts.some(a=>{ const ts=toks(a); const hit=tw.filter(w=>ts.some(x=>w.length<=2?x===w:eq(x,w))).length; return hit/tw.length>=need; });
+}
+/* ---- lenient ("kid voice") matching: children's speech is often recognised as a near word ---- */
+const skel = w => w.replace(/[aeiouy]/g,'').replace(/(.)\1+/g,'$1');            // consonant skeleton: duck/dock -> dck
+const closeWord = (x,t) => wordEq(x,t) || (x[0]===t[0] && lev(x,t)<=Math.ceil(t.length/2)) || (t.length>=3 && skel(x)===skel(t) && skel(t).length>=2);
+function lenientLetter(alts,item){
+  const l=item.en.toLowerCase();
+  return alts.some(a=>{ const ts=toks(a); return ts.length<=3 && ts.some(x=>x.length<=4 && x[0]===l); });
+}
+const lenientWord = (alts,item) => alts.some(a=>{ const t=norm(item.en).split(' ')[0]; return toks(a).some(x=>closeWord(x,t)); });
+function judgeSpeech(alts,it,mode){
+  const strict = mode==='letter' ? matchLetter(alts,it) : mode==='sentence' ? matchSentence(alts,it) : matchWord(alts,it);
+  if(strict || !state.lenient) return strict;
+  return mode==='letter' ? lenientLetter(alts,it) : mode==='sentence' ? matchSentence(alts,it,.5,closeWord) : lenientWord(alts,it);
+}
+
+/* ========================= UI HELPERS ========================= */
+let bubbleT;
+function bubble(text,kind='good',ms=1100){
+  const b=$('#bubble'); b.textContent=text; b.className='show '+kind;
+  clearTimeout(bubbleT); bubbleT=setTimeout(()=>b.className='',ms);
+}
+function confetti(n=90){
+  const cols=['#f43f5e','#f59e0b','#22c55e','#3b82f6','#a855f7','#facc15'];
+  for(let i=0;i<n;i++){ const c=document.createElement('div'); c.className='confetti';
+    c.style.left=Math.random()*100+'vw'; c.style.background=rand(cols);
+    c.style.animationDuration=(1.8+Math.random()*1.8)+'s'; c.style.animationDelay=(Math.random()*.6)+'s';
+    document.body.appendChild(c); setTimeout(()=>c.remove(),4500); }
+}
+// All levels are always open - he can pick any game. The map still highlights the suggested next one.
+const isUnlocked = () => true;
+const starStr = n => '⭐'.repeat(n)+'☆'.repeat(3-n);
+
+/* ========================= SCREENS ========================= */
+function renderMap(){
+  $('#hello').textContent = state.name ? `שלום ${state.name}!` : 'שלום!';
+  const total = Object.values(state.stars).reduce((a,b)=>a+b,0);
+  $('#totalStars').textContent = `⭐ ${total}`;
+  const nextIdx = LEVELS.findIndex((L,i)=>isUnlocked(i) && !(state.stars[L.id]>0));
+  $('#levelGrid').innerHTML = LEVELS.map((L,i)=>{
+    const st = state.stars[L.id]||0, un=isUnlocked(i);
+    return `<button class="lvl ${un?'':'locked'} ${i===nextIdx?'next':''}" data-i="${i}">
+      <span class="num">${i+1}</span>
+      <span class="ic emoji">${un?L.icon:'🔒'}</span>
+      <span><div class="t">${L.title}</div><div class="s emoji">${starStr(st)}</div></span></button>`;
+  }).join('');
+  show('map');
+  const focusEl = $(`.lvl[data-i="${nextIdx<0?0:nextIdx}"]`); focusEl && focusEl.focus();
+}
+$('#levelGrid').addEventListener('click',e=>{
+  const b=e.target.closest('.lvl'); if(!b) return; const i=+b.dataset.i;
+  if(!isUnlocked(i)){ sfx.bad(); bubble('🔒 קודם מסיימים את השלב הקודם','bad',1600); return; }
+  startLevel(i);
+});
+
+/* ========================= GAME ========================= */
+let G=null;
+/* ---- smart review: remember what he got wrong, and bring it back more often ---- */
+const mk = it => it.cat+':'+it.en;
+function markMistake(it){ const k=mk(it); state.mist[k]=(state.mist[k]||0)+1; save(); }
+function markSuccess(it){ const k=mk(it); if(state.mist[k]){ if(--state.mist[k]<=0) delete state.mist[k]; save(); } }
+function chooseItems(pool){
+  const weak = shuffle(pool.filter(p=>state.mist[mk(p)]>0)).slice(0,4);   // up to 4 "weak" items per round
+  const rest = pool.filter(p=>!weak.includes(p));
+  return shuffle([...weak, ...pickN(rest.length?rest:pool, QN-weak.length)]);
+}
+
+const keyOf = (L,c) => L.disp==='pic' ? c.pic : L.disp==='heb' ? SOUND[c.en] : c.en.toLowerCase();
+function buildQuestions(L){
+  const pool=L.pool();
+  return chooseItems(pool).map(item=>{
+    if(L.type!=='pick') return {item};
+    const answer = L.answer ? L.answer(item) : item;
+    const key = c => keyOf(L,c);
+    const cpool = L.choicePool ? L.choicePool(item) : pool.filter(p=>p.cat===item.cat);
+    const pad = L.choicePool ? shuffle(pool) : [];          // e.g. word family with only 3 words
+    const uniq=[];
+    for(const c of [...shuffle(cpool),...pad]){
+      if(key(c)!==key(answer) && !uniq.some(u=>key(u)===key(c))) uniq.push(c);
+      if(uniq.length===3) break;
+    }
+    return {item, answer, choices:shuffle([answer,...uniq])};
+  });
+}
+async function startLevel(i){
+  const L=LEVELS[i];
+  G={i,L,qs:buildQuestions(L),n:0,score:0,res:[],token:Symbol()};
+  $('#levelName').textContent = `${L.icon} ${L.title}`;
+  $('#instr').textContent = L.intro;
+  $('#stage').innerHTML='';
+  renderProgress(); show('game');
+  const tk=G.token;
+  if(hasHebrewVoice()) await say(L.intro,'he');
+  if(G && G.token===tk) nextQ();
+}
+function renderProgress(){
+  $('#progress').innerHTML = Array.from({length:QN},(_,k)=>{
+    const r=G.res[k]; return `<span class="dot ${r||''} ${k===G.n&&!r?'cur':''}"></span>`; }).join('');
+}
+const audioText = it => it.say || it.en;
+function nextQ(){
+  if(G.n>=QN) return finishLevel();
+  G.q = G.qs[G.n]; G.tries=0; G.locked=false; renderProgress();
+  G.L.type==='pick' ? renderPick() : renderSpeak();
+}
+function promptHTML(L,it){
+  switch(L.mode){
+    case 'listen': return `<button class="speaker emoji" id="spk">🔊</button>`;
+    case 'upper': return `<div class="prompt"><div class="big en">${it.en}</div></div><button class="btn" id="spk">🔊 שמע</button>`;
+    case 'first': return `<div class="prompt"><div class="big emoji">${it.pic}</div><div class="mid en">_${esc(it.en.slice(1))}</div></div><button class="btn" id="spk">🔊 שמע</button>`;
+    case 'read': return `<div class="prompt"><div class="big emoji">${it.pic}</div><div class="sub">${it.he}</div></div>`;
+    case 'lowshow': return `<div class="prompt"><div class="big en">${it.en.toLowerCase()}</div></div><button class="btn" id="spk">🔊 שמע</button>`;
+    case 'sound': return `<div class="prompt"><div class="big en">${it.en.toLowerCase()}</div></div><button class="btn" id="spk">🔊 שמע</button>`;
+    case 'family': return `<div class="prompt"><div class="big emoji">${it.pic}</div><div class="fambadge en">_${it.fam}</div><div class="sub">${it.he}</div></div>`;
+    case 'blend': return `<div class="prompt"><div class="blend en" id="blend">${it.en.split('').map(ch=>
+        `<span class="bl"><span class="bL">${ch}</span><span class="bH">${SOUND[ch.toUpperCase()]}</span></span>`).join('')}</div></div>
+        <button class="btn" id="spk">🔁 לפרק שוב</button>`;
+  }
+}
+/* Reading animation: each letter lights up with its Hebrew sound, then they slide together into one word */
+async function animateBlend(){
+  const box=$('#blend'); if(!box || G.blending) return;
+  G.blending=true; const tk=G.token;
+  box.classList.remove('joined'); box.querySelectorAll('.bl').forEach(b=>b.classList.remove('lit','done'));
+  const spans=[...box.querySelectorAll('.bl')];
+  for(let k=0;k<spans.length;k++){
+    if(!G || G.token!==tk) return;
+    spans[k].classList.add('lit'); tone(520+k*140,.18,'triangle',0,.12);
+    await sleep(900);
+    spans[k].classList.remove('lit'); spans[k].classList.add('done');
+  }
+  await sleep(250);
+  if(G && G.token===tk){ box.classList.add('joined'); tone(1040,.3,'triangle',0,.12); G.blending=false; }
+}
+function choiceHTML(L,c){
+  if(L.disp==='heb') return `<span class="heb">${SOUND[c.en]}</span>`;
+  if(L.disp==='pic') return c.textPic ? `<span class="en">${c.pic}</span>` : `<span class="emoji">${c.pic}</span>`;
+  if(L.disp==='lower') return `<span class="en">${c.en.toLowerCase()}</span>`;
+  return `<span class="en">${esc(c.en)}</span>`;
+}
+const silentMode = L => L.mode==='read' || L.mode==='family';   // reading levels: no audio before answering
+async function playPrompt(){
+  if(G.L.mode==='blend') return animateBlend();
+  const it=G.q.item, b=$('#spk'); if(b) b.classList.add('playing');
+  await say(audioText(it), 'en', G.L.mode==='listen' && it.cat==='sent' ? .75 : undefined);
+  if(b) b.classList.remove('playing');
+}
+function renderPick(){
+  const L=G.L, q=G.q;
+  $('#stage').innerHTML = promptHTML(L,q.item) +
+    `<div class="choices">${q.choices.map((c,k)=>`<button class="choice ${L.disp==='word'?'word':''}" data-k="${k}">${choiceHTML(L,c)}</button>`).join('')}</div>`;
+  const spk=$('#spk'); if(spk) spk.onclick=playPrompt;
+  document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>onPick(+b.dataset.k,b));
+  (document.querySelector('.choice')).focus();
+  if(!silentMode(L)) playPrompt();
+}
+async function onPick(k,btn){
+  if(G.locked) return;
+  const q=G.q, c=q.choices[k], L=G.L, tk=G.token;
+  if(c===q.answer){
+    G.locked=true; btn.classList.add('ok'); sfx.good();
+    const first = G.tries===0; if(first){ G.score++; markSuccess(q.item); }
+    G.res[G.n] = first?'ok':'half'; renderProgress();
+    if(L.meaning) bubble(`${q.item.en} = ${q.item.he}`,'good',1800);
+    else if(L.mode==='sound'){ const [w,pic]=LETTER_WORDS[q.item.en]; bubble(`${q.item.en.toLowerCase()} – ${pic} ${w}`,'good',1800); }
+    else bubble(rand(PRAISE_HE),'good');
+    if(L.mode==='blend'){ $('#blend')?.classList.add('joined'); await say(q.item.en,'en',.6); await sleep(150); await say(q.item.en); }
+    else if(['first','read','family'].includes(L.mode)) await say(q.item.en); // reinforce the word
+    await say(rand(PRAISE_EN),'en',1);
+    await sleep(250);
+    if(G && G.token===tk){ G.n++; nextQ(); }
+  }else{
+    if(G.tries===0) markMistake(q.item);
+    G.tries++; btn.classList.add('no'); btn.disabled=true; sfx.bad();
+    const a=q.answer;
+    if(L.hint && a.cat==='letter'){ const [w,pic]=LETTER_WORDS[a.en];
+      bubble(`${a.en.toLowerCase()} כמו ${pic} ${w}`,'bad',1800); }
+    else bubble('נסה שוב 🙂','bad',900);
+    if(L.mode==='blend'){ await sleep(400); await animateBlend(); if(G && G.token===tk && G.tries>=2) say(q.item.en,'en',.6); }
+    else if(!silentMode(L)){ await sleep(500); playPrompt(); }
+    else if(G.tries>=2) say(q.item.en);   // second mistake on a reading level: give the answer as audio help
+  }
+}
+
+/* ---- speaking ---- */
+function renderSpeak(){
+  const L=G.L, it=G.q.item;
+  let p='';
+  if(L.mode==='letter') p=`<div class="prompt"><div class="big en">${it.en}</div></div>`;
+  else if(L.mode==='word') p=`<div class="prompt"><div class="big emoji">${it.pic}</div><div class="mid en">${esc(it.en)}</div></div>`;
+  else if(L.mode==='sentence') p=`<div class="prompt"><div class="emoji" style="font-size:13vh">${it.pic}</div><div class="mid en" style="font-size:7vh">${esc(it.en)}</div><div class="sub">${it.he}</div></div>`;
+  else if(L.mode==='translate') p=`<div class="prompt"><div class="big ${it.textPic?'en':'emoji'}">${it.pic}</div><div class="sub" style="font-size:7vh">${it.he}</div></div>`;
+  $('#stage').innerHTML = `<div class="row" style="gap:6vw">${p}
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2vh">
+        <button class="mic emoji" id="mic">🎤</button>
+        <div class="micstatus" id="micStatus"></div>
+      </div></div>
+    <div class="heard" id="heard"></div>
+    <div class="row">
+      <button class="btn" id="hearBtn">${L.mode==='translate'?'💡 רמז':'🔊 שמע שוב'}</button>
+      <button class="btn small" id="okBtn">✔ אמר נכון (הורה)</button>
+      <button class="btn small" id="skipBtn">דלג ⏭</button>
+    </div>`;
+  $('#mic').onclick = () => doListen();
+  $('#hearBtn').onclick = async () => { stopListening(); G.hinted=true; await say(audioText(it)); };
+  $('#okBtn').onclick = () => { stopListening(); speakResult(true,true); };
+  $('#skipBtn').onclick = () => { stopListening(); speakResult(false,true); };
+  G.hinted=false;
+  $('#mic').focus();
+  if(!SR){ setMic('idle','הדפדפן הזה לא תומך בזיהוי דיבור 😕 (צריך Chrome)'); }
+  autoRound();
+}
+async function autoRound(){
+  const tk=G.token, n=G.n;
+  setMic('idle', G.L.mode==='translate' ? 'איך אומרים את זה באנגלית?' : 'הקשב...');
+  if(G.L.mode!=='translate' || G.tries>0) await say(audioText(G.q.item), 'en', G.L.mode==='sentence'?.75:undefined);
+  await sleep(200);
+  if(G && G.token===tk && G.n===n && SR) doListen();
+}
+function setMic(st,txt){
+  const m=$('#mic'); if(!m) return;
+  m.classList.toggle('listen', st==='listen');
+  $('#micStatus').textContent = txt ?? (st==='listen' ? '🎙️ אני מקשיב... דבר עכשיו!' : 'לחץ על המיקרופון ודבר');
+}
+async function doListen(){
+  if(G.listening || G.locked) return;
+  G.listening=true; setMic('listen');
+  const tk=G.token, n=G.n;
+  let alts=[];
+  const it0=G.q.item, m0=G.L.mode;
+  try{ alts = await listen(m0==='sentence'?12000:9000, a=>judgeSpeech(a,it0,m0)); }
+  catch(err){
+    G.listening=false;
+    const msg = err==='not-allowed'||err==='service-not-allowed' ? 'צריך לאשר למיקרופון 🎤 (בסמל המנעול בשורת הכתובת)'
+              : err==='network' ? 'אין חיבור לאינטרנט – זיהוי דיבור צריך אינטרנט' : 'בעיה במיקרופון: '+err;
+    setMic('idle',msg); return;
+  }
+  G.listening=false;
+  if(!G || G.token!==tk || G.n!==n || G.locked) return;
+  setMic('idle');
+  const it=G.q.item, m=G.L.mode;
+  const ok = alts.length>0 && judgeSpeech(alts,it,m);
+  const shown = alts[alts.length-1] || '';
+  $('#heard').innerHTML = alts.length ? `שמעתי: "<span class="en">${esc(shown)}</span>"` : 'לא שמעתי כלום... נסה שוב, קצת יותר חזק וקרוב למיקרופון 🙂';
+  if(ok) return speakResult(true);
+  if(!alts.length){ setMic('idle','לחץ על המיקרופון ונסה שוב'); return; }
+  G.tries++; sfx.bad();
+  if(G.tries>=3){ return speakResult(false); }
+  bubble('כמעט! נסה שוב 💪','bad',1000);
+  await sleep(900);
+  if(G && G.token===tk && G.n===n) autoRound();
+}
+async function speakResult(ok,manual=false){
+  if(G.locked) return; G.locked=true;
+  const tk=G.token, it=G.q.item;
+  if(ok){
+    // speaking is practice: success within the 3 tries counts (except when the translation was given as a hint)
+    const full = !(G.L.mode==='translate' && G.hinted);
+    if(full) G.score++;
+    if(G.tries===0) markSuccess(it); else markMistake(it);
+    G.res[G.n]= full?'ok':'half';
+    sfx.good(); bubble(rand(PRAISE_HE),'good'); confetti(25);
+    renderProgress();
+    await say(rand(PRAISE_EN),'en',1);
+  }else{
+    G.res[G.n]='miss'; renderProgress(); if(!manual) markMistake(it);
+    bubble('לא נורא! ככה אומרים:','bad',1600);
+    $('#heard').innerHTML = `<span class="en" style="font-size:5vh;font-weight:800">${esc(it.en)}</span>`;
+    await sleep(600); await say(audioText(it));
+  }
+  await sleep(400);
+  if(G && G.token===tk){ G.n++; nextQ(); }
+}
+
+/* ---- end of level ---- */
+function finishLevel(){
+  const L=G.L, pass=passOf(L), s=G.score;
+  const stars = s>=QN?3 : s>=pass+1?2 : s>=pass?1 : 0;
+  const prev = state.stars[L.id]||0;
+  if(stars>prev){ state.stars[L.id]=stars; save(); }
+  $('#resStars').textContent = starStr(stars);
+  const btns=[];
+  if(stars>0){
+    sfx.win(); confetti(140);
+    $('#resTitle').textContent = stars===3 ? `מושלם${state.name?', '+state.name:''}! 🏆` : `כל הכבוד${state.name?', '+state.name:''}! 🎉`;
+    $('#resText').textContent = `ענית נכון על ${s} מתוך ${QN}` + ' – עברת את השלב!';
+    if(G.i<LEVELS.length-1) btns.push(`<button class="bigbtn" data-a="next">לשלב הבא ➡️</button>`);
+    say('Great job! You passed!','en',.95);
+  }else{
+    $('#resTitle').textContent = 'כמעט! 💪';
+    $('#resText').textContent = `ענית נכון על ${s} מתוך ${QN}. צריך ${pass} כדי לעבור – בוא ננסה שוב!`;
+    say("Let's try again!",'en',.95);
+  }
+  btns.push(`<button class="bigbtn blue" data-a="again">🔁 שוב</button>`, `<button class="bigbtn gray" data-a="map">🗺️ למפה</button>`);
+  $('#resBtns').innerHTML=btns.join('');
+  const idx=G.i; G=null;
+  show('result'); $('#resBtns button').focus();
+  $('#resBtns').onclick = e => { const a=e.target.closest('button')?.dataset.a; if(!a) return;
+    if(a==='next') startLevel(idx+1); else if(a==='again') startLevel(idx); else renderMap(); };
+}
+$('#homeBtn').onclick = () => { stopListening(); speechSynthesis.cancel(); G=null; renderMap(); };
+
+/* ========================= WELCOME / SETTINGS ========================= */
+function goWelcome(){
+  $('#nameInput').value = state.name||'';
+  show('welcome'); $('#nameInput').focus();
+}
+$('#startBtn').onclick = async () => {
+  state.name = $('#nameInput').value.trim(); save(); sfx.pop();
+  renderMap();
+  if(hasHebrewVoice()) say(state.name?`שלום ${state.name}! בוא נלמד אנגלית`:'בוא נלמד אנגלית','he');
+  else say(state.name?`Hello ${state.name}! Let's learn English!`:"Hello! Let's learn English!",'en',.9);
+};
+$('#nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#startBtn').click(); });
+
+$('#settingsBtn').onclick = () => { refreshSettings(); $('#settings').classList.add('open'); $('#closeSettings').focus(); };
+$('#closeSettings').onclick = () => { $('#settings').classList.remove('open'); renderMap(); };
+function refreshSettings(){
+  $('#lenientBtn').textContent = state.lenient ? '🧸 זיהוי דיבור: סלחני (מופעל)' : '🎯 זיהוי דיבור: מדויק';
+  const weak = Object.entries(state.mist).sort((a,b)=>b[1]-a[1]).slice(0,16)
+    .map(([k,n])=>{ const [cat,en]=k.split(':'); return `<span class="en">${esc(cat==='letter'?en+en.toLowerCase():en)}</span> (${n})`; });
+  $('#weakList').innerHTML = '<b>🧠 לחיזוק</b> (חוזרים יותר בתרגולים): ' + (weak.length ? weak.join(' · ') : 'אין כרגע – מצוין!');
+  const en=voiceFor('en'), he=voiceFor('he');
+  $('#voiceInfo').innerHTML = `אנגלית: ${en?esc(en.name):'❌ לא נמצא'}<br>עברית: ${he?esc(he.name):'לא מותקן קול עברי – ההוראות יוצגו כטקסט בלבד'}`;
+}
+$('#lenientBtn').onclick = () => { state.lenient=!state.lenient; save(); refreshSettings(); };
+$('#renameBtn').onclick = () => { $('#settings').classList.remove('open'); goWelcome(); };
+$('#resetBtn').onclick = () => { if(confirm('למחוק את כל ההתקדמות והכוכבים?')){ state.stars={}; save(); refreshSettings(); } };
+$('#voiceTestBtn').onclick = async () => { refreshSettings(); await say('Hello! A, B, C. Cat, dog, apple.'); if(hasHebrewVoice()) say('שלום! זה הקול בעברית','he'); };
+$('#micTestBtn').onclick = async () => {
+  $('#micTestOut').textContent='🎙️ תגיד משהו באנגלית, למשל "hello"...';
+  try{ const a=await listen(6000); $('#micTestOut').textContent = a.length ? `✅ שמעתי: "${a[a.length-1]}"` : '⚠️ לא שמעתי כלום. בדוק שהמיקרופון מחובר ומאושר.'; }
+  catch(err){ $('#micTestOut').textContent = '❌ שגיאה: '+err+(err==='not-allowed'?' – צריך לאשר גישה למיקרופון':''); }
+};
+$('#fsBtn').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(()=>{}); };
+
+/* ========================= KEYBOARD / REMOTE NAV ========================= */
+function visibleButtons(){
+  const root = $('#settings').classList.contains('open') ? $('#settings') : document.querySelector('.screen.active');
+  return [...root.querySelectorAll('button:not([disabled]),input')].filter(el=>el.offsetParent!==null);
+}
+function moveFocus(dx,dy){
+  const els=visibleButtons(), cur=document.activeElement;
+  if(!els.includes(cur)){ els[0]&&els[0].focus(); return; }
+  const r=cur.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  let best=null, bd=Infinity;
+  for(const el of els){ if(el===cur) continue;
+    const q=el.getBoundingClientRect(), x=q.left+q.width/2-cx, y=q.top+q.height/2-cy;
+    const along = dx ? x*dx : y*dy; if(along<=4) continue;
+    const d = along + (dx?Math.abs(y):Math.abs(x))*2.5; if(d<bd){bd=d;best=el;} }
+  if(best){ best.focus(); best.scrollIntoView({block:'nearest'}); }
+}
+document.addEventListener('keydown',e=>{
+  const inInput = document.activeElement && document.activeElement.tagName==='INPUT';
+  const dirs={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+  if(dirs[e.key] && !(inInput && (e.key==='ArrowLeft'||e.key==='ArrowRight'))){ e.preventDefault(); moveFocus(...dirs[e.key]); }
+  else if(e.key===' ' && !inInput && G && $('#game').classList.contains('active')){
+    e.preventDefault(); if(G.L.type==='pick'){ if(!silentMode(G.L)) playPrompt(); } else $('#hearBtn')?.click();
+  }
+  else if(e.key==='Escape' && $('#settings').classList.contains('open')) $('#closeSettings').click();
+});
+
+/* ========================= BOOT ========================= */
+if(state.name) { renderMap(); } else goWelcome();
+</script>
+</body>
+</html>
